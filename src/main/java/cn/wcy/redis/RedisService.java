@@ -833,7 +833,6 @@ public class RedisService {
      * @param prefix key的前缀
      */
     public void releaseLock(final String key,final String prefix) {
-        int i = 0;
         String mergeKey = new StringBuilder()
                 .append(prefix)
                 .append("_").append(key).toString();
@@ -843,11 +842,6 @@ public class RedisService {
             }
         } catch (RedisConnectionFailureException re) {
             LOGGER.error("RedisService [remove] method  produces exceptionally, exception message is {}",re.getLocalizedMessage());
-            i++;
-            if(i == 2) {
-                return;
-            }
-            releaseLock(key,prefix);
         } catch (Exception e) {
             e.printStackTrace();
         }
