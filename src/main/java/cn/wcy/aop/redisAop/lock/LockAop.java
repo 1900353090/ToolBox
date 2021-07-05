@@ -189,7 +189,7 @@ public class LockAop {
         StringBuilder key = new StringBuilder();
         key.append(joinPoint.getSignature().getName()).append("-").append(jointKey(joinPoint));
         try {
-            redisService.setIfAbsentEXDoWhile(prefix, key.toString(), lock.expireSeconds());
+            redisService.setIfAbsentEXDoWhile(prefix, MD5.valueOf(key.toString()), lock.expireSeconds());
             return joinPoint.proceed();
         }catch (Exception e) {
             LOGGER.error("锁环绕异常:{}", e.getMessage());
