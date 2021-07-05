@@ -169,13 +169,10 @@ public class CacheAop {
         }
         Object result = null;
         try {
-            redisService.setIfAbsentEXDoWhile(key.toString(), item, 60);
             result = joinPoint.proceed();
         }catch (Exception e) {
             LOGGER.error("缓存aop的锁异常:{}", e.getMessage());
-            return null;
-        }finally {
-            redisService.releaseLock(item, key.toString());
+            throw e;
         }
         if(cache) {
             if(Objects.isNull(map)) {
