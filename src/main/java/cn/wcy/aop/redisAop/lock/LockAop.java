@@ -15,6 +15,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
@@ -32,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date : 2020/11/11 10:53
  * @version : 0.0.1
  */
+@Order(0)
 @Aspect
 @Component
 public class LockAop {
@@ -189,7 +191,7 @@ public class LockAop {
         StringBuilder key = new StringBuilder();
         key.append(joinPoint.getSignature().getName()).append("-").append(jointKey(joinPoint));
         try {
-            redisService.setIfAbsentEXDoWhile(prefix, MD5.valueOf(key.toString()), lock.expireSeconds());
+            redisService.setIfAbsentEXDoWhile(prefix, key.toString(), lock.expireSeconds());
             return joinPoint.proceed();
         }catch (Exception e) {
             LOGGER.error("锁环绕异常:{}", e.getMessage());

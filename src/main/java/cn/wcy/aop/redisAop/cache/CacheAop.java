@@ -151,7 +151,7 @@ public class CacheAop {
             //获取方法名称
             String methodName = joinPoint.getSignature().getName();
             //拼接缓存key
-            key.append(clazzName).append(methodName);
+            key.append(clazzName).append(":").append(methodName);
             item = MD5.valueOf(jointKey(joinPoint));
             LOGGER.info("【缓存】item："+item);
             map = redisService.hmGet(key.toString());

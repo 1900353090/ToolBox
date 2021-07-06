@@ -1,23 +1,20 @@
 package cn.wcy.redis;
 
 import cn.wcy.encryption.MD5;
-import cn.wcy.redis.lock.LockSet;
 import cn.wcy.util.StringUtil;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.RedisConnectionFailureException;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import redis.clients.jedis.Protocol;
-import redis.clients.jedis.util.SafeEncoder;
 import java.beans.PropertyDescriptor;
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -770,7 +767,6 @@ public class RedisService {
     /**
      *  循环设置分布式锁，直到成功。单位秒. 【如果key 不存在的话】
      * @param key
-     * @param value
      * @param prefix
      * @return
      */
@@ -779,11 +775,11 @@ public class RedisService {
         int i=0;
         int timeOut = expireSeconds*10+100;
         do {
-            isOk = setIfAbsentEX(key, 0, prefix, expireSeconds);
+            isOk = setIfAbsentEX(key, "0", prefix, expireSeconds);
             ++i;
-            try {
-                Thread.sleep(100L);
-            }catch (Exception e) {}
+//            try {
+//                Thread.sleep(100L);
+//            }catch (Exception e) {}
         }while (!isOk && i <= timeOut);
         LOGGER.info("线程{}，设置分布式锁，总共循环次数： {}", Thread.currentThread().getId(), i);
         return isOk;
@@ -796,9 +792,9 @@ public class RedisService {
      * @param prefix
      * @return
      */
-    private boolean setIfAbsentEX(final String key, final Serializable value, final String prefix, final int expireSeconds) {
+    private boolean setIfAbsentEX(final String key, final String value, final String prefix, final int expireSeconds) {
         return setIfAbsent(new StringBuilder().append(prefix)
-                .append("_").append(key).toString(),
+                .append(":").append(key).toString(),
                 value, expireSeconds==0?60:expireSeconds, NX, EX);
     }
 
@@ -806,25 +802,44 @@ public class RedisService {
      * 设置分布式锁
      * @param key
      * @param value
-     * @param exptime
      * @param EXPX   "EX" or "PX"   EX：秒  PX:毫秒
      * @return  boolean
      */
-    private boolean setIfAbsent(final String key, final Serializable value, final long exptime,final String NXXX,final String EXPX) {
-        Boolean b = (Boolean) redisTemplate.execute(new RedisCallback<Boolean>() {
-            @Override
-            public Boolean doInRedis(RedisConnection connection) throws DataAccessException {
-                RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
-                RedisSerializer keySerializer = redisTemplate.getKeySerializer();
-                Object obj = connection.execute("set", keySerializer.serialize(key),
-                        valueSerializer.serialize(value),
-                        SafeEncoder.encode(NXXX),
-                        SafeEncoder.encode(EXPX),
-                        Protocol.toByteArray(exptime));
-                return obj != null;
-            }
-        });
-        return b;
+    private boolean setIfAbsent(final String key, final String value, final long expireTime,final String NXXX,final String EXPX) {
+        Boolean resultBoolean = null;
+        try {
+            resultBoolean = redisTemplate.execute((RedisCallback<Boolean>) connection -> {
+                Object nativeConnection = connection.getNativeConnection();
+                String redisResult = "";
+                RedisSerializer<String> keySerializer = (RedisSerializer<String>) redisTemplate.getKeySerializer();
+                RedisSerializer<String> valueSerializer = (RedisSerializer<String>) redisTemplate.getValueSerializer();
+                //lettuce连接包下序列化键值，否知无法用默认的ByteArrayCodec解析
+                byte[] keyByte = keySerializer.serialize(key);
+                byte[] valueByte = valueSerializer.serialize(value);
+                // lettuce连接包下 redis 单机模式setnx
+                if (nativeConnection instanceof RedisAsyncCommands) {
+                    RedisAsyncCommands commands = (RedisAsyncCommands)nativeConnection;
+                    //同步方法执行、setnx禁止异步
+                    redisResult = commands
+                            .getStatefulConnection()
+                            .sync()
+                            .set(keyByte, valueByte, SetArgs.Builder.nx().ex(10));
+                }
+                // lettuce连接包下 redis 集群模式setnx
+                if (nativeConnection instanceof RedisAdvancedClusterAsyncCommands) {
+                    RedisAdvancedClusterAsyncCommands clusterAsyncCommands = (RedisAdvancedClusterAsyncCommands) nativeConnection;
+                    redisResult = clusterAsyncCommands
+                            .getStatefulConnection()
+                            .sync()
+                            .set(keyByte, keyByte, SetArgs.Builder.nx().ex(10));
+                }
+                //返回加锁结果
+                return "OK".equalsIgnoreCase(redisResult);
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return resultBoolean != null && resultBoolean;
     }
 
     /**
@@ -835,7 +850,7 @@ public class RedisService {
     public void releaseLock(final String key,final String prefix) {
         String mergeKey = new StringBuilder()
                 .append(prefix)
-                .append("_").append(key).toString();
+                .append(":").append(key).toString();
         try {
             if (hasKey(mergeKey)) {
                 redisTemplate.delete(mergeKey);
