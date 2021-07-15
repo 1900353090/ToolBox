@@ -22,6 +22,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -127,6 +128,9 @@ public class HttpUtil {
      * @return URL 所代表远程资源的响应结果
      */
     public static String sendGet(String url, String param) {
+        return sendGet(url, param, new LinkedHashMap<>(0));
+    }
+    public static String sendGet(String url, String param, Map<String, String> header) {
         String result = "";
         BufferedReader in = null;
         try {
@@ -139,6 +143,10 @@ public class HttpUtil {
             connection.setRequestProperty("connection", "Keep-Alive");
             connection.setRequestProperty("user-agent",
                     "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+            //设置请求头
+            for(String key:header.keySet()) {
+                connection.setRequestProperty(key, header.get(key));
+            }
             // 建立实际的连接
             connection.connect();
             // 获取所有响应头字段
@@ -172,12 +180,19 @@ public class HttpUtil {
     }
 
     public static String post(JSONObject json, String path) {
+        return post(json, path, new LinkedHashMap<>(0));
+    }
+    public static String post(JSONObject json, String path, Map<String, String> header) {
         String result;
         try {
             HttpClient client = new DefaultHttpClient();
             HttpPost post = new HttpPost(path);
             post.setHeader("Content-Type", "application/json; charset=UTF-8 ");
             post.addHeader("Authorization", "Basic YWRtaW46");
+            //设置请求头
+            for(String key:header.keySet()) {
+                post.addHeader(key, header.get(key));
+            }
             StringEntity s = new StringEntity(json.toString(), "utf-8");
             s.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "appliction/json"));
             post.setEntity(s);

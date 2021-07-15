@@ -459,7 +459,7 @@ public class RedisService {
      * @LastUpdater: 王晨阳
      * @Date: 2020/6/28-11:26
      */
-    public Long setRemove(String key, Object... values) {
+    public Long remove(String key, Object... values) {
         try {
             return redisTemplate.opsForSet().remove(key, values);
         } catch (Exception e) {
@@ -471,7 +471,7 @@ public class RedisService {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                setRemove(key, values);
+                remove(key, values);
             }
         });
     }
