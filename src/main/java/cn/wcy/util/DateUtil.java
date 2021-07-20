@@ -7,9 +7,7 @@ import javax.annotation.processing.Completion;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -534,6 +532,18 @@ public class DateUtil {
             e.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * @Description: 类型转换
+     * @Author: 王晨阳
+     * @LastUpdater: 王晨阳
+     * @Date: 2020/7/13-13:33
+     */
+    public static Date valueOf(LocalDateTime time) {
+        ZoneId zoneId = ZoneId.systemDefault();
+        ZonedDateTime zdt = time.atZone(zoneId);
+        return Date.from(zdt.toInstant());
     }
 
     /**
