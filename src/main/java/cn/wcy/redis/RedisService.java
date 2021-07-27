@@ -13,6 +13,7 @@ import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
@@ -39,6 +40,19 @@ public class RedisService {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+
+    /**
+     * @Description: 如果执行的是读操作，由于连接对象不是代理对象，读操作并不会重新创建一个连接，
+     * 而是使用当前连接，并且放在事务中运行，因此读操作并不会立即执行而是等到事务提交时才能执行，导致读操作读取的结果为null
+     * 需要调用此方法释放链接
+     * @Author: 王晨阳
+     * @LastUpdater: 王晨阳
+     * @Date: 2020/6/23-11:21
+     */
+    public void release() {
+        //执行释放资源
+        TransactionSynchronizationManager.unbindResource(redisTemplate.getConnectionFactory());
+    }
 
     /**
      * @Description: 获取对象的值key
