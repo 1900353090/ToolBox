@@ -1,25 +1,27 @@
 package cn.wcy.inform;
 
+import cn.wcy.inform.conf.Mail;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.util.Objects;
 
 @Component
 public class MailUtil {
 
 
     // 邮箱发送方对象
-    @Autowired
+    @Autowired(required = false)
     private JavaMailSender jms;
 
-    // 获取配置文件内的发送者邮箱
-    @Value("${spring.mail.username}")
-    private String username;
+    @Autowired
+    private Mail mail;
 
     /**
      * @描述：发送邮箱验证码
@@ -33,6 +35,9 @@ public class MailUtil {
         StringBuilder stringBuilder=new StringBuilder();
         stringBuilder.append("<html><head><title>验证码</title></head><body>");
         stringBuilder.append("亲爱的用户,您的当前的验证码是："+code);
+        if (Objects.isNull(jms)) {
+            throw new SecurityException("yml内 spring.mail 未配置");
+        }
         MimeMessage mimeMessage = jms.createMimeMessage();
         // multipart模式
         try {
@@ -40,7 +45,7 @@ public class MailUtil {
             // 收件人邮箱user.getMail()
             mimeMessageHelper.setTo(receiver);
             // 发件人邮箱
-            mimeMessageHelper.setFrom(username);
+            mimeMessageHelper.setFrom(mail.getUsername());
             mimeMessage.setSubject("验证码");
             // 启用html
             mimeMessageHelper.setText(stringBuilder.toString(),true);
@@ -62,13 +67,16 @@ public class MailUtil {
      */
     public boolean sendMailDiy(String receiver, String htmlContent) {
         MimeMessage mimeMessage = jms.createMimeMessage();
+        if (Objects.isNull(jms)) {
+            throw new SecurityException("yml内 spring.mail 未配置");
+        }
         // multipart模式
         try {
             MimeMessageHelper mimeMessageHelper=new MimeMessageHelper(mimeMessage, true);
             // 收件人邮箱user.getMail()
             mimeMessageHelper.setTo(receiver);
             // 发件人邮箱
-            mimeMessageHelper.setFrom(username);
+            mimeMessageHelper.setFrom(mail.getUsername());
             mimeMessage.setSubject("验证码");
             // 启用html
             mimeMessageHelper.setText(htmlContent,true);

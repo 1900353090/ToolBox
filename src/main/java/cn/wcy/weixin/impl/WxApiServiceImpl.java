@@ -16,7 +16,7 @@ public class WxApiServiceImpl implements WxApiService {
     private WxConfig wxConfig;
 
     private void judgeConfig() {
-        if (StringUtils.isBlank(wxConfig.getAppId()) || StringUtils.isBlank(wxConfig.getSecret())) {
+        if (StringUtils.isBlank(wxConfig.getAppid()) || StringUtils.isBlank(wxConfig.getSecret())) {
             throw new NullPointerException("application.yml inexistence weixin.appid or weixin.secrect");
         }
     }
@@ -27,9 +27,9 @@ public class WxApiServiceImpl implements WxApiService {
         if (StringUtils.isBlank(authPara.getCode())) {
             throw new NullPointerException("PARAMETER CODE IS NULL");
         }
-        String grantType = StringUtils.isBlank(wxConfig.getGrantType())?"authorization_code":wxConfig.getGrantType();
-        String paras = "appid="+wxConfig.getAppId()+"&secret="+wxConfig.getSecret()+"&js_code="+authPara.getCode()+"&grant_type="+grantType;
-        String authApi = StringUtils.isBlank(wxConfig.getAuthApi())?"https://api.weixin.qq.com/sns/jscode2session":wxConfig.getAuthApi();
+        String grantType = StringUtils.isBlank(wxConfig.getAuth().getGrant_type())?"authorization_code":wxConfig.getAuth().getGrant_type();
+        String paras = "appid="+wxConfig.getAppid()+"&secret="+wxConfig.getSecret()+"&js_code="+authPara.getCode()+"&grant_type="+grantType;
+        String authApi = StringUtils.isBlank(wxConfig.getAuth().getApi())?"https://api.weixin.qq.com/sns/jscode2session":wxConfig.getAuth().getApi();
         String sendGet = HttpUtil.sendGet(authApi, paras);
         if (StringUtils.isBlank(sendGet)) {
             throw new RuntimeException("AUTH API RESPONSE ERROR, RESPONSE PARAMETER: " + sendGet);

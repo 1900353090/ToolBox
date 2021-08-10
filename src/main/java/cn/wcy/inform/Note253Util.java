@@ -1,9 +1,11 @@
 package cn.wcy.inform;
 
+import cn.wcy.inform.conf.Note253;
 import cn.wcy.interaction.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,14 +14,8 @@ import java.io.Serializable;
 @Component
 public class Note253Util {
 
-    @Value("${chuanglan.url}")
-    private String url;
-
-    @Value("${chuanglan.account}")
-    private String account;
-
-    @Value("${chuanglan.password}")
-    private String password;
+    @Autowired
+    private Note253 note253;
 
     /**
      * msgid	消息id
@@ -45,23 +41,23 @@ public class Note253Util {
      */
     public InformResult sendCodeInform(String uid, String extend, Boolean report, Long sendtime, String msg, String... phones) {
         JSONObject body = new JSONObject();
-        body.put("account", account);
-        body.put("password", password);
+        body.put("account", note253.getAccount());
+        body.put("password", note253.getPassword());
         body.put("msg", msg);
         body.put("phone", String.join(",", phones));
         body.put("sendtime", sendtime);
         body.put("report", report);
         body.put("extend", extend);
         body.put("uid", uid);
-        return getResultInform(HttpUtil.post(body, url));
+        return getResultInform(HttpUtil.post(body, note253.getUrl()));
     }
     public InformResult sendCodeInform(String msg, String... phones) {
         JSONObject body = new JSONObject();
-        body.put("account", account);
-        body.put("password", password);
+        body.put("account", note253.getAccount());
+        body.put("password", note253.getPassword());
         body.put("msg", msg);
         body.put("phone", String.join(",", phones));
-        return getResultInform(HttpUtil.post(body, url));
+        return getResultInform(HttpUtil.post(body, note253.getUrl()));
     }
     private InformResult getResultInform(String result) {
         if (StringUtils.isBlank(result)) {
