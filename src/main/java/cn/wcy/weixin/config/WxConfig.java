@@ -36,9 +36,6 @@ public class WxConfig {
     }
 
     public Auth getAuth() {
-        if (Objects.isNull(this.auth)) {
-            throw new SecurityException("weixin.auth 未定义");
-        }
         return auth;
     }
 
