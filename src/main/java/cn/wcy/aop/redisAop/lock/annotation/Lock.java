@@ -1,5 +1,9 @@
 package cn.wcy.aop.redisAop.lock.annotation;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.lang.annotation.*;
 
 /**
@@ -20,7 +24,22 @@ public @interface Lock {
     //锁超时时间
     int expireSeconds() default 60;
 
+    @Getter
+    @AllArgsConstructor
+    enum Type {
+        MODULE(1, "模块自定义，同一个模块根据这个加锁"),
+        CLASS(2, "类自定义，同一个类根据这个加锁"),
+        GLOBAL(3, "全局自定义，所有模块都根据这个加锁");
+        private Integer value;
+        private String desc;
+    }
+
     //模块类型
-    String projectName() default "${spring.application.name}";
+    @Value("${spring.application.name}")
+    String projectName() default "";
+
+    Type type() default Type.CLASS;
+
+    String key() default "";
     
 }

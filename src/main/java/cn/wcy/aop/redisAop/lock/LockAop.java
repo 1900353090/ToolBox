@@ -6,6 +6,7 @@ import cn.wcy.redis.RedisService;
 import cn.wcy.util.BeanUtil;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -185,11 +186,33 @@ public class LockAop {
     public Object lockScan(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
         Lock lock = getAnnotation(joinPoint, Lock.class);
-        //获取类全路径
-        String prefix = Class.forName(joinPoint.getTarget().getClass().getName()).getName();
-        //获取方法名称
+        String prefix = null;
         StringBuilder key = new StringBuilder();
-        key.append(joinPoint.getSignature().getName()).append("-").append(jointKey(joinPoint));
+        if (StringUtils.isNotBlank(lock.key())) {
+            switch (lock.type()) {
+                case CLASS:
+                    //获取类全路径
+                    prefix = Class.forName(joinPoint.getTarget().getClass().getName()).getName();
+                    key.append(lock.key());
+                    break;
+                case GLOBAL:
+                    prefix = lock.key();
+                    key.append("LOCK");
+                    break;
+                case MODULE:
+                    prefix = lock.projectName();
+                    key.append(lock.key());
+                    break;
+                default: break;
+            }
+        }
+        if (Objects.isNull(prefix)) {
+            //获取类全路径
+            prefix = Class.forName(joinPoint.getTarget().getClass().getName()).getName();
+            //获取方法名称+参数拼接成key
+            key.append(joinPoint.getSignature().getName());
+        }
+        key.append("-").append(jointKey(joinPoint));
         try {
             redisService.setIfAbsentEXDoWhile(prefix, key.toString(), lock.expireSeconds());
             return joinPoint.proceed();
