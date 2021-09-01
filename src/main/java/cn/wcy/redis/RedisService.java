@@ -899,4 +899,46 @@ public class RedisService {
         }
     }
 
+    /**
+     * 存入队列
+     * @param key
+     * @param value 值
+     */
+    public long leftPush(final String key,final Object value) {
+        try {
+            return this.getRedisTemplate().opsForList().leftPush(key, value);
+        } catch (RedisConnectionFailureException re) {
+            LOGGER.error("RedisService [remove] method  produces exceptionally, exception message is {}",re.getLocalizedMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * 取出队列
+     * @param key
+     * @param timeout 取超时时间
+     */
+    public Object rightPop(final String key, final long timeout) {
+        try {
+            return this.getRedisTemplate().opsForList().rightPop(key, timeout, TimeUnit.SECONDS);
+        } catch (RedisConnectionFailureException re) {
+            LOGGER.error("RedisService [remove] method  produces exceptionally, exception message is {}",re.getLocalizedMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public Object rightPop(final String key) {
+        try {
+            return this.getRedisTemplate().opsForList().rightPop(key);
+        } catch (RedisConnectionFailureException re) {
+            LOGGER.error("RedisService [remove] method  produces exceptionally, exception message is {}",re.getLocalizedMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
