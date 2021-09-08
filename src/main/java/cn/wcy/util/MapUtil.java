@@ -1,5 +1,9 @@
 package cn.wcy.util;
 
+import org.apache.logging.log4j.util.Strings;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -60,4 +64,36 @@ public class MapUtil<K,V> extends HashMap<K,V> implements Map<K,V> {
         xml.append("</xml>");
         return xml.toString();
     }
+
+    /**
+     * @Description: 对象转map是否保留空值
+     * @Param: retainNull 是否保留空值
+     * @return: xml字符串
+     * @Author: 王晨阳
+     * @Date: 2019/11/5-15:07
+     */
+    public static Map<String, Object> objectToMap(Object object, boolean retainNull) {
+        if(Objects.isNull(object)) {
+            return null;
+        }
+        Class<?> c = object.getClass();
+        //获取c的当前成员变量的属性描述器
+        Field[] fields = c.getDeclaredFields();
+        Map<String, Object> map = new LinkedHashMap<>(fields.length);
+        for(Field field:fields) {
+            //获取当前属性描述的读取方法
+            Object value = null;
+            try {
+                Method get = c.getMethod("get" + StringUtil.toUpperCaseFirstOne(field.getName()));
+                value = get.invoke(object);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if((Objects.nonNull(value) && value.toString().length() > 0 && retainNull) || !retainNull) {
+                map.put(field.getName(), value);
+            }
+        }
+        return map;
+    }
+
 }
