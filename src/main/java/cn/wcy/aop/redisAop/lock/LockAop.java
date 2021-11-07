@@ -1,8 +1,8 @@
 package cn.wcy.aop.redisAop.lock;
 
+import cn.wcy.redis.RedisService;
 import cn.wcy.aop.redisAop.lock.annotation.*;
 import cn.wcy.encryption.MD5;
-import cn.wcy.redis.RedisService;
 import cn.wcy.util.BeanUtil;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.ArrayUtils;

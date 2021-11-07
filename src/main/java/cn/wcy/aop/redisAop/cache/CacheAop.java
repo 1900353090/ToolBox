@@ -1,10 +1,9 @@
 package cn.wcy.aop.redisAop.cache;
 
+import cn.wcy.redis.RedisService;
 import cn.wcy.aop.redisAop.cache.annotation.RedisCache;
 import cn.wcy.aop.redisAop.cache.annotation.RedisCacheParaKey;
-import cn.wcy.aop.redisAop.lock.annotation.Lock;
 import cn.wcy.encryption.MD5;
-import cn.wcy.redis.RedisService;
 import cn.wcy.util.BeanUtil;
 import cn.wcy.util.FileUtil;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -19,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
